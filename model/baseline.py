@@ -18,7 +18,7 @@ class MultiLayerPerceptron(Model):
         :param x: input sequence with shape [batch_size, max_sequence_length, vocab_size]
         :return: embedded representation for each word, outputs shape [batch_size, max_sequence_length, embed_dim]
         """
-        embed_matrix = tf.Variable(tf.random_normal(shape=[8150, 300], mean=0, stddev=1), name='embed_mat')
+        embed_matrix = tf.Variable(tf.random_normal(shape=[8150, 300], mean=0, stddev=0.1), name='embed_mat')
         embed = tf.einsum('abc,cd->abd', x, embed_matrix)
         return embed
 

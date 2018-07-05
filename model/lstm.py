@@ -6,21 +6,26 @@ import logger
 
 
 class LSTM(Model):
-    def __init__(self, attn_usage=True):
+    def __init__(self,
+                 vocab_size,
+                 max_seq_length=60,
+                 attn_usage=True
+                 ):
         super(LSTM, self).__init__()
         self.hidden_unit_num = 512
         self.output_dim = 2
         self.attn_usage = attn_usage
-        self.lstm_hidden_unit_num = 128  
+        self.lstm_hidden_unit_num = 128
+        self.vocab_size = vocab_size
+        self.max_seq_len = max_seq_length
 
-    @staticmethod
-    def embedding_layer(x):
+    def embedding_layer(self, x):
         """
         linear embedding
         :param x: input sequence with shape [batch_size, max_sequence_length, vocab_size]
         :return: embedded representation for each word, outputs shape [batch_size, max_sequence_length, embed_dim]
         """
-        embed_matrix = tf.Variable(tf.random_normal(shape=[8150, 300], mean=0, stddev=1), name='embed_mat')
+        embed_matrix = tf.Variable(tf.random_normal(shape=[self.vocab_size, 300], mean=0, stddev=1), name='embed_mat')
         embed = tf.einsum('abc,cd->abd', x, embed_matrix)
         return embed
 
@@ -67,8 +72,8 @@ class LSTM(Model):
     def train(self, epochs, exp_name, lr=1e-4, keep_prob=0.5, normal_gain=0.8, save_model=False):
 
         # inputs & outputs format
-        x1 = tf.placeholder(tf.float32, [None, 46, 8150], name='x1')
-        x2 = tf.placeholder(tf.float32, [None, 46, 8150], name='x2')
+        x1 = tf.placeholder(tf.float32, [None, self.max_seq_len, self.vocab_size], name='x1')
+        x2 = tf.placeholder(tf.float32, [None, self.max_seq_len, self.vocab_size], name='x2')
         y = tf.placeholder('float', [None, self.output_dim], name='y')
         prob = tf.placeholder('float', name='keep_prob')
         norm_gain = tf.placeholder('float', name='norm_gain')
@@ -77,7 +82,7 @@ class LSTM(Model):
         logits = self.representation_extractor(x1, x2, prob)
         loss = self.compute_loss(logits, y)
 
-        pred = tf.argmax(tf.nn.softmax(logits),1)
+        pred = tf.argmax(tf.nn.softmax(logits), 1, name='prediction')
         label = tf.argmax(y, 1)
 
         accuracy = self.compute_accuracy(logits, y)
@@ -91,7 +96,7 @@ class LSTM(Model):
             init = tf.global_variables_initializer()
             sess.run(init)
 
-            data_provider = DataProvider('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv')
+            data_provider = DataProvider()
             log_saver = logger.LogSaver(exp_name)
 
             # train
@@ -176,6 +181,5 @@ class LSTM(Model):
 
 if __name__ == '__main__':
 
-    DATA_PATH = '/afs/inf.ed.ac.uk/user/s17/s1700619/E2E_dialog/my_dataset'
     model = LSTM()
     model.train(200, 'test')

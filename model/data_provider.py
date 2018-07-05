@@ -7,6 +7,7 @@ import time
 from collections import OrderedDict
 import os
 import numpy as np
+from data_utils import UtilFn
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -21,13 +22,13 @@ np.random.seed(1000)
 
 
 class DataProvider(object):
-    def __init__(self, path):
+    def __init__(self):
         """
         A class for data provider.
         :param path: raw data path, including file name and suffix
         :param batch_size: costumed batch size
         """
-        self.path = path
+        # self.path = path
         self.vocabulary = []
         self.train_index = None
         self.test_index = None
@@ -39,7 +40,7 @@ class DataProvider(object):
         self.data_size = None
         self.ALREADY_LOAD_DATA = 0
         self.ALREADY_LOAD_VOCAB = 0
-        self.sequence_max_len = 46
+        self.sequence_max_len = 60
         self.load_vocab()
         self.load_data()
 
@@ -148,6 +149,8 @@ class DataProvider(object):
         else:
             matrix = np.zeros([len(list_of_index), vocab_size])
         for i, word_index in enumerate(list_of_index):
+            if i>46:
+                print(i)
             matrix[i][word_index] = 1
 
         return matrix.tolist()
@@ -213,8 +216,8 @@ class DataProvider(object):
             x1 = [self.word2idx(x) for x in x1]
             x2 = [self.word2idx(x) for x in x2]
             if data_type == 'one-hot':
-                x1_batch.append(self.one_hot(x1, self.vocab_size, pad=True, max_len=46))
-                x2_batch.append(self.one_hot(x2, self.vocab_size, pad=True, max_len=46))
+                x1_batch.append(self.one_hot(x1, self.vocab_size, pad=True, max_len=self.sequence_max_len))
+                x2_batch.append(self.one_hot(x2, self.vocab_size, pad=True, max_len=self.sequence_max_len))
             elif data_type == 'index':
                 x1_batch.append(self.padding(x1))
                 x2_batch.append(self.padding(x2))
@@ -254,7 +257,21 @@ if __name__ == '__main__':
     data_provider = DataProvider(DATA_PATH)
 
     x1, x2, y = data_provider.train.next_batch(100)
-    train = data_provider.train_index
-    val = data_provider.val_index
-    test = data_provider.test_index
+    count_same_meaning = 0
+    count_diff_meaning = 0
+    for i in range(5000):
+        if i%500 == 0 and i!=0:
+            print(i)
+        _, _, y = data_provider.train.next_batch(1)
+        # print(y)
+        if y[0][1] == 1:
+            count_same_meaning += 1
+        if y[0][0] == 1:
+            count_diff_meaning += 1
+
+    print('same meaning number=', count_same_meaning)
+    print('diff meaning number=', count_diff_meaning)
+    # train = data_provider.train_index
+    # val = data_provider.val_index
+    # test = data_provider.test_index
     pass
