@@ -90,7 +90,7 @@ class Model(object):
         align_matrix = tf.matmul(tf.einsum('ijk->ikj', x), x)
         alignment = tf.nn.softmax(align_matrix, 0)
         context_vector = tf.matmul(x, alignment)
-        attention_output = tf.layers.dense(tf.reshape(context_vector, [-1, 46 * 128]),  # was T*lstm_hidden_units
+        attention_output = tf.layers.dense(tf.reshape(context_vector, [-1, 60 * 128]),  # was T*lstm_hidden_units
                                            attn_output_dim,
                                            activation=tf.nn.tanh)
 
