@@ -16,8 +16,8 @@ sys.setdefaultencoding('utf8')
 # DATA_PATH = '/afs/inf.ed.ac.uk/user/s17/s1700619/ATEC/NLP/dataset/atec_nlp_sim_train.csv'
 # MODEL_PATH = '/afs/inf.ed.ac.uk/user/s17/s1700619/ATEC/NLP/model/'
 DATA_PATH = '/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv'
-MODEL_PATH = '/Users/shyietliu/python/ATEC/project/NLP/model'
-os.chdir(MODEL_PATH)
+# MODEL_PATH = '/Users/shyietliu/python/ATEC/project/NLP/model'
+# os.chdir(MODEL_PATH)
 np.random.seed(1000)
 
 
