@@ -240,7 +240,7 @@ class DataProvider(object):
         else:
             self.batch_count = self.batch_count + 1
 
-        return x1_batch, x2_batch, y_batch
+        return x1_batch, x2_batch, np.array(y_batch).reshape([-1,])
 
     # def save_json_data(self):
     #     data = {'train': [], 'val': [], 'test': []}

@@ -74,6 +74,7 @@ class Model(object):
     @staticmethod
     def compute_accuracy(logits, desired):
         pred = tf.nn.softmax(logits)
+        print(pred)
         correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(desired, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 

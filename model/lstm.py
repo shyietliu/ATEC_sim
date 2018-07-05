@@ -83,7 +83,7 @@ class LSTM(Model):
         x1_one_hot = tf.one_hot(x1, self.vocab_size)
         x2 = tf.placeholder(tf.int32, [None, self.max_seq_len], name='x2')
         x2_one_hot = tf.one_hot(x2, self.vocab_size)
-        y = tf.placeholder(tf.int32, [None, 1], name='y')
+        y = tf.placeholder(tf.int32, [None], name='y')
         y_one_hot = tf.one_hot(y, 2)
 
         prob = tf.placeholder('float', name='keep_prob')
