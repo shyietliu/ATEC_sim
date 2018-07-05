@@ -7,6 +7,8 @@ import time
 from collections import OrderedDict
 import os
 import numpy as np
+import io
+import json
 from data_utils import UtilFn
 
 reload(sys)
@@ -59,10 +61,12 @@ class DataProvider(object):
         self.index = self.test_index
         return self
 
-    def pre_process(self, vocab_path):
+    def pre_process(self, csv_file_path):
         """Clean data and Create a vocabulary, save them to $vocab_path$"""
+        vocab_path = '../dataset/'
+
         # read data file
-        with open(self.path) as csv_file:
+        with open(csv_file_path) as csv_file:
             reader = csv.reader(csv_file, delimiter='\t')
             data = [row for row in reader]  # data structure: [no., sen1, sen2, label]
         # activate user dict
@@ -111,7 +115,7 @@ class DataProvider(object):
                 print>> f, item
 
         # save cleaned data
-        with open(vocab_path+d_file_name, "w") as f:
+        with open(vocab_path+d_file_name, "a") as f:
             for idx, line in enumerate(data):
                 f.write(line[0]+',')
                 for item in line[1]:
@@ -124,8 +128,8 @@ class DataProvider(object):
                 if idx % 1000 == 0:
                     print('saved {0} data pairs...'.format(idx))
 
-    @staticmethod
-    def one_hot(list_of_index, vocab_size=None, pad=False, max_len=None):
+
+    def one_hot(self, list_of_index, vocab_size=None, pad=False, max_len=None):
         """
         Making one-hot encoding and padding (optional) for a sequence of indices
         :param list_of_index: a list of word index in vocabulary, e.g. [1, 3, 0]
@@ -148,10 +152,17 @@ class DataProvider(object):
 
         else:
             matrix = np.zeros([len(list_of_index), vocab_size])
-        for i, word_index in enumerate(list_of_index):
-            if i>46:
-                print(i)
-            matrix[i][word_index] = 1
+        if vocab_size == 2:
+            if list_of_index[0] == 0:
+                matrix = np.array([1, 0])
+            elif list_of_index[1] == 1:
+                matrix = np.array([0, 1])
+
+        else:
+            padded_seq = np.pad(list_of_index, (0, self.sequence_max_len - len(list_of_index)), 'constant')
+            matrix[np.arange(max_len), padded_seq] = 1
+
+
 
         return matrix.tolist()
 
@@ -188,7 +199,7 @@ class DataProvider(object):
         # padded_seq.append(row)
         return padded_seq.tolist()
 
-    def next_batch(self, batch_size, data_type='one-hot'):
+    def next_batch(self, batch_size, data_type='index'):
         """
         get batch data
         :returns x1_batch: 2D list of index of the words [batch_size, word_index]
@@ -218,10 +229,11 @@ class DataProvider(object):
             if data_type == 'one-hot':
                 x1_batch.append(self.one_hot(x1, self.vocab_size, pad=True, max_len=self.sequence_max_len))
                 x2_batch.append(self.one_hot(x2, self.vocab_size, pad=True, max_len=self.sequence_max_len))
+                y_batch.append(self.one_hot(y, 2)[0])
             elif data_type == 'index':
                 x1_batch.append(self.padding(x1))
                 x2_batch.append(self.padding(x2))
-            y_batch.append(self.one_hot(y, 2)[0])
+                y_batch.append(y)
 
         if self.batch_count == total_num_batch-1:
             self.batch_count = 0  # reset count
@@ -230,12 +242,99 @@ class DataProvider(object):
 
         return x1_batch, x2_batch, y_batch
 
+    # def save_json_data(self):
+    #     data = {'train': [], 'val': [], 'test': []}
+    #
+    #     for i, index in enumerate(self.train_index):
+    #         time_start = time.time()
+    #         data_piece = []  # [sentence1, sentence2, label]
+    #         each_data = self.data[index].split(',')
+    #         x1 = each_data[1]
+    #         x2 = each_data[2]
+    #         y = [int(each_data[3])]
+    #         print('!!!!!!!!!!!!!!!!', y)
+    #
+    #         time_mid = time.time()
+    #         print(1, time_mid-time_start)
+    #         x1 = x1.split('/')[:-1]
+    #         x2 = x2.split('/')[:-1]
+    #         x1 = [self.word2idx(x) for x in x1]
+    #         x2 = [self.word2idx(x) for x in x2]
+    #
+    #         time_end = time.time()
+    #         print(2, time_end - time_mid)
+    #
+    #         # data_piece.append(self.one_hot(x1, self.vocab_size, pad=True, max_len=60))
+    #         # data_piece.append(self.one_hot(x2, self.vocab_size, pad=True, max_len=60))
+    #         # data_piece.append(self.one_hot(y, 2, max_len=2)[0])
+    #
+    #         data_piece.append(x1)
+    #         data_piece.append(x2)
+    #         data_piece.append(y)
+    #
+    #         time_xx = time.time()
+    #         print(3, time_xx - time_end)
+    #
+    #         data['train'].append(data_piece)
+    #
+    #         if i % 10 == 0 and i!=0:
+    #             print('processed {0} data pairs'.format(i))
+    #
+    #
+    #
+    #     for i, index in enumerate(self.val_index):
+    #         data_piece = []  # [sentence1, sentence2, label]
+    #         each_data = self.data[index].split(',')
+    #         x1 = each_data[1]
+    #         x2 = each_data[2]
+    #         y = [int(each_data[3])]
+    #
+    #         x1 = x1.split('/')[:-1]
+    #         x2 = x2.split('/')[:-1]
+    #         x1 = [self.word2idx(x) for x in x1]
+    #         x2 = [self.word2idx(x) for x in x2]
+    #
+    #         data_piece.append(self.one_hot(x1, self.vocab_size, pad=True, max_len=self.sequence_max_len))
+    #         data_piece.append(self.one_hot(x2, self.vocab_size, pad=True, max_len=self.sequence_max_len))
+    #         data_piece.append(self.one_hot(y, 2)[0])
+    #
+    #         data['val'].append(data_piece)
+    #
+    #         if i % 1000 == 0 and i != 0:
+    #             print('processed {0} data pairs'.format(i))
+    #
+    #             break
+    #
+    #     for i, index in enumerate(self.test_index):
+    #         data_piece = []  # [sentence1, sentence2, label]
+    #         each_data = self.data[index].split(',')
+    #         x1 = each_data[1]
+    #         x2 = each_data[2]
+    #         y = [int(each_data[3])]
+    #
+    #         x1 = x1.split('/')[:-1]
+    #         x2 = x2.split('/')[:-1]
+    #         x1 = [self.word2idx(x) for x in x1]
+    #         x2 = [self.word2idx(x) for x in x2]
+    #
+    #         data_piece.append(self.one_hot(x1, self.vocab_size, pad=True, max_len=self.sequence_max_len))
+    #         data_piece.append(self.one_hot(x2, self.vocab_size, pad=True, max_len=self.sequence_max_len))
+    #         data_piece.append(self.one_hot(y, 2)[0])
+    #
+    #         data['test'].append(data_piece)
+    #
+    #         if i % 1000 == 0 and i != 0:
+    #             print('processed {0} data pairs'.format(i))
+    #             break
+    #     with io.open('data.json', 'w', encoding='utf-8') as outfile:
+    #         json.dump(data, outfile)
+
     def split_data(self):
         """Randomly split data (7-2-1)"""
         self.data_size = len(self.data)
         index = np.random.permutation(self.data_size)
-        self.train_index = index[: int(self.data_size*0.7)]
-        self.val_index = index[int(self.data_size*0.7): int(self.data_size*0.9)]
+        self.train_index = index[: int(self.data_size*0.8)]
+        self.val_index = index[int(self.data_size*0.8): int(self.data_size*0.9)]
         self.test_index = index[int(self.data_size*0.9):]
 
     def word2idx(self, word):
@@ -254,23 +353,25 @@ class DataProvider(object):
 
 if __name__ == '__main__':
 
-    data_provider = DataProvider(DATA_PATH)
+    data_provider = DataProvider()
 
-    x1, x2, y = data_provider.train.next_batch(100)
-    count_same_meaning = 0
-    count_diff_meaning = 0
-    for i in range(5000):
-        if i%500 == 0 and i!=0:
-            print(i)
-        _, _, y = data_provider.train.next_batch(1)
-        # print(y)
-        if y[0][1] == 1:
-            count_same_meaning += 1
-        if y[0][0] == 1:
-            count_diff_meaning += 1
-
-    print('same meaning number=', count_same_meaning)
-    print('diff meaning number=', count_diff_meaning)
+    # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
+    # x1, x2, y = data_provider.train.next_batch(100)
+    data_provider.save_json_data()
+    # count_same_meaning = 0
+    # count_diff_meaning = 0
+    # for i in range(5000):
+    #     if i%500 == 0 and i!=0:
+    #         print(i)
+    #     _, _, y = data_provider.train.next_batch(1)
+    #     # print(y)
+    #     if y[0][1] == 1:
+    #         count_same_meaning += 1
+    #     if y[0][0] == 1:
+    #         count_diff_meaning += 1
+    #
+    # print('same meaning number=', count_same_meaning)
+    # print('diff meaning number=', count_diff_meaning)
     # train = data_provider.train_index
     # val = data_provider.val_index
     # test = data_provider.test_index

@@ -3,6 +3,7 @@ from model import Model
 from tqdm import tqdm
 from data_provider import DataProvider
 import logger
+import time
 
 
 class LSTM(Model):
@@ -69,25 +70,36 @@ class LSTM(Model):
 
         return logits
 
-    def train(self, epochs, exp_name, lr=1e-4, keep_prob=0.5, normal_gain=0.8, save_model=False):
+    def train(self, epochs, exp_name, lr=1e-4, keep_prob=0.5, normal_gain=0.8, save_model=False, batch_size=10):
 
         # inputs & outputs format
-        x1 = tf.placeholder(tf.float32, [None, self.max_seq_len, self.vocab_size], name='x1')
-        x2 = tf.placeholder(tf.float32, [None, self.max_seq_len, self.vocab_size], name='x2')
-        y = tf.placeholder('float', [None, self.output_dim], name='y')
+        # -------------------------------------------------------------------- #
+        # x1 = tf.placeholder(tf.float32, [None, self.max_seq_len, self.vocab_size], name='x1')
+        # x2 = tf.placeholder(tf.float32, [None, self.max_seq_len, self.vocab_size], name='x2')
+        # y = tf.placeholder('float', [None, self.output_dim], name='y')
+        # -------------------------------------------------------------------- #
+
+        x1 = tf.placeholder(tf.int32, [None, self.max_seq_len], name='x1')
+        x1_one_hot = tf.one_hot(x1, self.vocab_size)
+        x2 = tf.placeholder(tf.int32, [None, self.max_seq_len], name='x2')
+        x2_one_hot = tf.one_hot(x2, self.vocab_size)
+        y = tf.placeholder(tf.int32, [None, 1], name='y')
+        y_one_hot = tf.one_hot(y, 2)
+
         prob = tf.placeholder('float', name='keep_prob')
+
         norm_gain = tf.placeholder('float', name='norm_gain')
 
         # construct computation graph
-        logits = self.representation_extractor(x1, x2, prob, normal_gain)
-        loss = self.compute_loss(logits, y)
+        logits = self.representation_extractor(x1_one_hot, x2_one_hot, prob, normal_gain)
+        loss = self.compute_loss(logits, y_one_hot)
 
         pred = tf.argmax(tf.nn.softmax(logits), 1, name='prediction')
-        label = tf.argmax(y, 1)
+        label = tf.argmax(y_one_hot, 1)
 
-        accuracy = self.compute_accuracy(logits, y)
+        accuracy = self.compute_accuracy(logits, y_one_hot)
 
-        f1 = self.compute_f1_score(logits, y)
+        f1 = self.compute_f1_score(logits, y_one_hot)
 
         train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss, name='train_op')
 
@@ -101,75 +113,102 @@ class LSTM(Model):
 
             # train
             for epoch in range(epochs):
-                batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(100)
-                sess.run(train_op, feed_dict={x1: batch_x_1,
-                                              x2: batch_x_2,
-                                              y: batch_y,
-                                              prob: keep_prob,
-                                              norm_gain:normal_gain})
 
-                # validating
-                if epoch % 10 == 0 and epoch != 0:
-                    print('running validation ...')
-                    train_loss = loss.eval(feed_dict={x1: batch_x_1,
-                                                      x2: batch_x_2,
-                                                      y: batch_y,
-                                                      prob: keep_prob,
-                                                      norm_gain: normal_gain})
+                for iteration in range(int(81981/batch_size)):
 
-                    # val_x_1, val_x_2, val_y = data_provider.val.next_batch(1000)
-                    # val_acc = accuracy.eval(feed_dict={
-                    #                 x1: val_x_1,
-                    #                 x2: val_x_2,
-                    #                 y: val_y})
+                    time_start = time.time()
+                    batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(batch_size)
+                    time_mid = time.time()
+                    print('load data takes {0}s'.format(time_mid-time_start))
+                    sess.run(train_op, feed_dict={x1: batch_x_1,
+                                                  x2: batch_x_2,
+                                                  y: batch_y,
+                                                  prob: keep_prob,
+                                                  norm_gain: normal_gain})
+                    time_end = time.time()
+                    print('train model with batch size={0} takes {1}s'.format(batch_size, time_end - time_mid))
 
-                    # Incremental Validation
-                    mean_val_acc = 0
-                    for i in tqdm(range(25)):
-                        val_x_1, val_x_2, val_y = data_provider.val.next_batch(10)
-                        val_acc = accuracy.eval(feed_dict={
-                                        x1: val_x_1,
-                                        x2: val_x_2,
-                                        y: val_y,
-                                        prob: 1.0,
-                                        norm_gain: 1.0}
-                                        )
-                        mean_val_acc = mean_val_acc + (val_acc - mean_val_acc)/(i+1)
+                    # validating
+                    if iteration % 50 == 0 and iteration != 0:
+                        print('running validation ...')
+                        train_loss = loss.eval(feed_dict={x1: batch_x_1,
+                                                          x2: batch_x_2,
+                                                          y: batch_y,
+                                                          prob: keep_prob,
+                                                          norm_gain: normal_gain})
 
-                        # f1 = f1.eval(feed_dict={
+                        #val_x_1, val_x_2, val_y = data_provider.val.next_batch(1000)
+                        #val_acc = accuracy.eval(feed_dict={
                         #                 x1: val_x_1,
                         #                 x2: val_x_2,
-                        #                 y: val_y,
-                        #                 prob: 1.0}
-                        #                 )
+                        #                 y: val_y})
 
-                        prediction = pred.eval(feed_dict={
-                                        x1: val_x_1,
-                                        x2: val_x_2,
-                                        y: val_y,
-                                        prob: 1.0,
-                                        norm_gain: 1.0}
-                                        )
-                        labels = label.eval(feed_dict={
-                                        x1: val_x_1,
-                                        x2: val_x_2,
-                                        y: val_y,
-                                        prob: 1.0,
-                                        norm_gain: 1.0}
-                                        )
-                        # print('\nprediction:', prediction, '\nlabel:', labels)
-                        # print('f1-score={0}'.format(f1))
+                        # Incremental Validation
+                        mean_val_acc = 0
+                        for i in tqdm(range(100)):
+                            time_start = time.time()
+                            val_x_1, val_x_2, val_y = data_provider.val.next_batch(100)
+                            val_acc = accuracy.eval(feed_dict={
+                                           x1: val_x_1,
+                                           x2: val_x_2,
+                                           y: val_y,
+                                           prob: 1.0,
+                                           norm_gain: 1.0}
+                                           )
 
-                    val_acc = mean_val_acc
-                    print('Training {0} epoch, validation accuracy is {1}, training loss is {2}'.format(epoch,
-                                                                                                        val_acc,
-                                                                                                        train_loss))
-                    # save train process
-                    log_saver.train_process_saver([epoch, train_loss, val_acc])
+                            mean_val_acc = mean_val_acc + (val_acc - mean_val_acc)/(i+1)
+
+                            time_end = time.time()
+                            print('evaluate model with batch size=100 takes {0}s'.format(time_end - time_start))
+
+                            #f1 = f1.eval(feed_dict={
+                            #                x1: val_x_1,
+                            #                x2: val_x_2,
+                            #                y: val_y,
+                            #                prob: 1.0}
+                            #                )
+
+                            #prediction = pred.eval(feed_dict={
+                            #                x1: val_x_1,
+                            #                x2: val_x_2,
+                            #                y: val_y,
+                            #                prob: 1.0,
+                            #                norm_gain: 1.0}
+                            #                )
+                            # labels = label.eval(feed_dict={
+                            #                x1: val_x_1,
+                            #                x2: val_x_2,
+                            #                y: val_y,
+                            #                prob: 1.0,
+                            #                norm_gain: 1.0}
+                            #                )
+                            # print('\nprediction:', prediction, '\nlabel:', labels)
+                            # print('f1-score={0}'.format(f1))
+
+                        val_acc = mean_val_acc
+                        print('Training {0} epoch, validation accuracy is {1}, training loss is {2}'.format(epoch,
+                                                                                                            val_acc,
+                                                                                                            train_loss))
+                        # save train process
+                        log_saver.train_process_saver([epoch, train_loss, val_acc])
 
             # evaluate
-            test_x_1, test_x_2, test_y = data_provider.test.next_batch(10)
-            test_acc = sess.run(accuracy, feed_dict={x1: test_x_1, x2: test_x_2, y: test_y, prob: 1.0})
+            mean_test_acc = 0
+            for i in tqdm(range(100)):
+                test_x_1, test_x_2, test_y = data_provider.test.next_batch(100)
+                test_acc = accuracy.eval(feed_dict={
+                    x1: test_x_1,
+                    x2: test_x_2,
+                    y: test_y,
+                    prob: 1.0,
+                    norm_gain: 1.0}
+                )
+                mean_test_acc = mean_test_acc + (test_acc - mean_test_acc) / (i + 1)
+
+            test_acc = mean_test_acc
+
+            # test_x_1, test_x_2, test_y = data_provider.test.next_batch(100)
+            # test_acc = sess.run(accuracy, feed_dict={x1: test_x_1, x2: test_x_2, y: test_y, prob: 1.0})
             print('test accuracy is {0}'.format(test_acc))
             # save training log
             log_saver.test_result_saver([test_acc])
@@ -181,5 +220,11 @@ class LSTM(Model):
 
 if __name__ == '__main__':
 
-    model = LSTM(8151)
-    model.train(200, 'test')
+    model = LSTM(13250)
+    model.train(epochs=10,
+                exp_name='test',
+                lr=1e-4,
+                keep_prob=0.5,
+                normal_gain=0.8,
+                save_model=False,
+                batch_size=100)

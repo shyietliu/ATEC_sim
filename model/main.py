@@ -7,23 +7,27 @@ FLAGS = tf.app.flags.FLAGS
 DATA_PATH = '/afs/inf.ed.ac.uk/user/s17/s1700619/E2E_dialog/my_dataset'
 tf.app.flags.DEFINE_string('data_path', DATA_PATH, "training data dir")
 tf.app.flags.DEFINE_integer('epoch', 1000, "Training epochs")
+tf.app.flags.DEFINE_integer('batch_size', 10, "Training epochs")
 tf.app.flags.DEFINE_float('lr', 1e-4, "Learning rate")
+tf.app.flags.DEFINE_float('keep_prob', 0.5, "Dropout keep probability")
+tf.app.flags.DEFINE_float('norm_gain', 0.8, "Gain of layer normalization")
 tf.app.flags.DEFINE_boolean('train', True, 'Training status')
 tf.app.flags.DEFINE_string('exp_name', 'default', 'experiment name')
 tf.app.flags.DEFINE_boolean('save_model', False, 'save model or not')
 
 if __name__ == '__main__':
     model_name = 'LSTM_Attn'
-    model = LSTM()
+    model = LSTM(13250)
 
     if FLAGS.exp_name == 'default':
         exp_name = model_name
     else:
         exp_name = FLAGS.exp_name
 
-    model.train(FLAGS.epoch,
-                exp_name,
-                FLAGS.lr,
-                save_model=FLAGS.save_model)
-    # task = 1,2,3,4,5
-    # test = 1, 2, 3, 4
+    model.train(epochs=FLAGS.epoch,
+                exp_name=FLAGS.exp_name,
+                lr=FLAGS.lr,
+                keep_prob=FLAGS.keep_prob,
+                normal_gain=FLAGS.norm_gain,
+                save_model=FLAGS.save_model,
+                batch_size=FLAGS.batch_size)

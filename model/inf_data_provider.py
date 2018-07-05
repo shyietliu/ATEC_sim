@@ -68,7 +68,7 @@ class InferenceDataProvider(UtilFn):
         # padded_seq.append(row)
         return padded_seq.tolist()
 
-    def next_batch(self, batch_size, data_type='one-hot'):
+    def next_batch(self, batch_size, data_type='index'):
 
         if type(batch_size) is int:
             # if self.data_size % batch_size != 0:
