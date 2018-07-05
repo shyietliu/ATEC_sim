@@ -35,11 +35,6 @@ class LogSaver(object):
         self.log_path = os.path.join(self.exp_path, 'log')
         self.log_file_path = os.path.join(self.log_path, log_file_name)
 
-        # set model file path
-        self.model_path = os.path.join(self.exp_path, 'model')
-        model_file_name = self.exp_name + '.ckpt'
-        self.model_file_path = os.path.join(self.model_path, model_file_name)
-
     def train_process_saver(self, information):
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
@@ -54,7 +49,18 @@ class LogSaver(object):
         with open(self.log_file_path, 'a') as f:
             print('Test acc {0}'.format(information[0]), file=f)
 
-    def model_saver(self, sess):
+    def model_saver(self, sess, epoch):
+        """
+
+        :param sess: tf sess
+        :param epoch: int
+        :return:
+        """
+        # set model file path
+        self.model_path = os.path.join(self.exp_path, 'model_'+str(epoch)+'_epoch')
+        model_file_name = self.exp_name + '.ckpt'
+        self.model_file_path = os.path.join(self.model_path, model_file_name)
+
         saver = tf.train.Saver()
         saver.save(sess, self.model_file_path)
 

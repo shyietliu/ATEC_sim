@@ -216,7 +216,7 @@ class LSTM(Model):
 
             # Model save
             if save_model:
-                log_saver.model_saver(sess)
+                log_saver.model_saver(sess, epoch)
 
 
 if __name__ == '__main__':
