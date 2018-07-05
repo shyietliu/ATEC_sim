@@ -79,7 +79,7 @@ class LSTM(Model):
         norm_gain = tf.placeholder('float', name='norm_gain')
 
         # construct computation graph
-        logits = self.representation_extractor(x1, x2, prob)
+        logits = self.representation_extractor(x1, x2, prob, normal_gain)
         loss = self.compute_loss(logits, y)
 
         pred = tf.argmax(tf.nn.softmax(logits), 1, name='prediction')
@@ -101,7 +101,7 @@ class LSTM(Model):
 
             # train
             for epoch in range(epochs):
-                batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(100)
+                batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(10)
                 sess.run(train_op, feed_dict={x1: batch_x_1,
                                               x2: batch_x_2,
                                               y: batch_y,
@@ -117,46 +117,46 @@ class LSTM(Model):
                                                       prob: keep_prob,
                                                       norm_gain: normal_gain})
 
-                    # val_x_1, val_x_2, val_y = data_provider.val.next_batch(1000)
-                    # val_acc = accuracy.eval(feed_dict={
+                    #val_x_1, val_x_2, val_y = data_provider.val.next_batch(1000)
+                    #val_acc = accuracy.eval(feed_dict={
                     #                 x1: val_x_1,
                     #                 x2: val_x_2,
                     #                 y: val_y})
 
                     # Incremental Validation
                     mean_val_acc = 0
-                    for i in tqdm(range(25)):
-                        val_x_1, val_x_2, val_y = data_provider.val.next_batch(10)
+                    for i in tqdm(range(39)):
+                        val_x_1, val_x_2, val_y = data_provider.val.next_batch(100)
                         val_acc = accuracy.eval(feed_dict={
-                                        x1: val_x_1,
-                                        x2: val_x_2,
-                                        y: val_y,
-                                        prob: 1.0,
-                                        norm_gain: 1.0}
-                                        )
+                                       x1: val_x_1,
+                                       x2: val_x_2,
+                                       y: val_y,
+                                       prob: 1.0,
+                                       norm_gain: 1.0}
+                                       )
                         mean_val_acc = mean_val_acc + (val_acc - mean_val_acc)/(i+1)
 
-                        # f1 = f1.eval(feed_dict={
-                        #                 x1: val_x_1,
-                        #                 x2: val_x_2,
-                        #                 y: val_y,
-                        #                 prob: 1.0}
-                        #                 )
+                        #f1 = f1.eval(feed_dict={
+                        #                x1: val_x_1,
+                        #                x2: val_x_2,
+                        #                y: val_y,
+                        #                prob: 1.0}
+                        #                )
 
-                        prediction = pred.eval(feed_dict={
-                                        x1: val_x_1,
-                                        x2: val_x_2,
-                                        y: val_y,
-                                        prob: 1.0,
-                                        norm_gain: 1.0}
-                                        )
-                        labels = label.eval(feed_dict={
-                                        x1: val_x_1,
-                                        x2: val_x_2,
-                                        y: val_y,
-                                        prob: 1.0,
-                                        norm_gain: 1.0}
-                                        )
+                        #prediction = pred.eval(feed_dict={
+                        #                x1: val_x_1,
+                        #                x2: val_x_2,
+                        #                y: val_y,
+                        #                prob: 1.0,
+                        #                norm_gain: 1.0}
+                        #                )
+                        # labels = label.eval(feed_dict={
+                        #                x1: val_x_1,
+                        #                x2: val_x_2,
+                        #                y: val_y,
+                        #                prob: 1.0,
+                        #                norm_gain: 1.0}
+                        #                )
                         # print('\nprediction:', prediction, '\nlabel:', labels)
                         # print('f1-score={0}'.format(f1))
 
@@ -181,5 +181,5 @@ class LSTM(Model):
 
 if __name__ == '__main__':
 
-    model = LSTM()
+    model = LSTM(8151)
     model.train(200, 'test')

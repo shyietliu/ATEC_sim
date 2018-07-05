@@ -234,8 +234,8 @@ class DataProvider(object):
         """Randomly split data (7-2-1)"""
         self.data_size = len(self.data)
         index = np.random.permutation(self.data_size)
-        self.train_index = index[: int(self.data_size*0.7)]
-        self.val_index = index[int(self.data_size*0.7): int(self.data_size*0.9)]
+        self.train_index = index[: int(self.data_size*0.8)]
+        self.val_index = index[int(self.data_size*0.8): int(self.data_size*0.9)]
         self.test_index = index[int(self.data_size*0.9):]
 
     def word2idx(self, word):
