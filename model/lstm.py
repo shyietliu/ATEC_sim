@@ -79,7 +79,7 @@ class LSTM(Model):
         norm_gain = tf.placeholder('float', name='norm_gain')
 
         # construct computation graph
-        logits = self.representation_extractor(x1, x2, prob)
+        logits = self.representation_extractor(x1, x2, prob, normal_gain)
         loss = self.compute_loss(logits, y)
 
         pred = tf.argmax(tf.nn.softmax(logits), 1, name='prediction')
@@ -181,5 +181,5 @@ class LSTM(Model):
 
 if __name__ == '__main__':
 
-    model = LSTM()
+    model = LSTM(8151)
     model.train(200, 'test')
