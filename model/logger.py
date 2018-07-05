@@ -49,8 +49,8 @@ class LogSaver(object):
                                                                   information[2]), file=f)
 
     def test_result_saver(self, information):
-        if not os.path.exists(self.log_file_path):
-            os.makedirs(self.log_file_path)
+        if not os.path.exists(self.log_path):
+            os.makedirs(self.log_path)
         with open(self.log_file_path, 'a') as f:
             print('Test acc {0}'.format(information[0]), file=f)
 
