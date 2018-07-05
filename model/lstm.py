@@ -114,19 +114,20 @@ class LSTM(Model):
             # train
             for epoch in range(epochs):
 
-                for iteration in range(int(81981/batch_size)):
+                for iteration in range(1):
+                # for iteration in range(int(81981/batch_size)):
 
-                    time_start = time.time()
+                    # time_start = time.time()
                     batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(batch_size)
-                    time_mid = time.time()
-                    print('load data takes {0}s'.format(time_mid-time_start))
+                    # time_mid = time.time()
+                    # print('load data takes {0}s'.format(time_mid-time_start))
                     sess.run(train_op, feed_dict={x1: batch_x_1,
                                                   x2: batch_x_2,
                                                   y: batch_y,
                                                   prob: keep_prob,
                                                   norm_gain: normal_gain})
-                    time_end = time.time()
-                    print('train model with batch size={0} takes {1}s'.format(batch_size, time_end - time_mid))
+                    # time_end = time.time()
+                    # print('train model with batch size={0} takes {1}s'.format(batch_size, time_end - time_mid))
 
                     # validating
                     if iteration % 50 == 0 and iteration != 0:
@@ -146,7 +147,7 @@ class LSTM(Model):
                         # Incremental Validation
                         mean_val_acc = 0
                         for i in tqdm(range(100)):
-                            time_start = time.time()
+                            # time_start = time.time()
                             val_x_1, val_x_2, val_y = data_provider.val.next_batch(100)
                             val_acc = accuracy.eval(feed_dict={
                                            x1: val_x_1,
@@ -158,8 +159,8 @@ class LSTM(Model):
 
                             mean_val_acc = mean_val_acc + (val_acc - mean_val_acc)/(i+1)
 
-                            time_end = time.time()
-                            print('evaluate model with batch size=100 takes {0}s'.format(time_end - time_start))
+                            # time_end = time.time()
+                            # print('evaluate model with batch size=100 takes {0}s'.format(time_end - time_start))
 
                             #f1 = f1.eval(feed_dict={
                             #                x1: val_x_1,

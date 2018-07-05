@@ -31,3 +31,5 @@ if __name__ == '__main__':
                 normal_gain=FLAGS.norm_gain,
                 save_model=FLAGS.save_model,
                 batch_size=FLAGS.batch_size)
+
+# --epoch 10 --exp_name 'LSTM_Attn' --lr 1e-4 --keep_prob 0.5 --norm_gain 0.8 --save_model True --batch_size 100
