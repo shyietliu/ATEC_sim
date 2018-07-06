@@ -95,10 +95,11 @@ class Model(object):
         # print(context_vector)
         # print(tf.concat([tf.reshape(context_vector, [-1, 60 * 128]), x], 1))
 
-        attention_output = tf.layers.dense(tf.concat([tf.reshape(x, [-1, 7680]), tf.reshape(context_vector, [-1, 7680])], 1),  # was T*lstm_hidden_units
-                                           attn_output_dim,
-                                           activation=tf.nn.tanh)
+        hidden = tf.layers.dense(tf.concat([tf.reshape(x, [-1, 7680]), tf.reshape(context_vector, [-1, 7680])], 1),  # was T*lstm_hidden_units
+                                 2048,
+                                 activation=tf.nn.relu)
 
+        attention_output = tf.layers.dense(hidden, attn_output_dim, tf.nn.relu)
         return attention_output
 
 

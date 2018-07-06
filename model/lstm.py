@@ -114,8 +114,8 @@ class LSTM(Model):
             # train
             for epoch in range(epochs):
 
-                for iteration in range(1):
-                # for iteration in range(int(81981/batch_size)):
+                # for iteration in range(1):
+                for iteration in range(int(112701/batch_size)):
 
                     # time_start = time.time()
                     batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(batch_size)
@@ -126,7 +126,7 @@ class LSTM(Model):
                                                   norm_gain: normal_gain})
 
                     # validating
-                    if iteration % 50 == 0 and iteration != 0:
+                    if iteration % 500 == 0 and iteration != 0:
                         print('running validation ...')
                         train_loss = loss.eval(feed_dict={x1: batch_x_1,
                                                           x2: batch_x_2,
@@ -190,7 +190,11 @@ class LSTM(Model):
                             precision = TP_score/(TP_score+FP_score)
                             recall = TP_score/(TP_score+FN_score)
                             f1 = 2* precision * recall /(precision+recall)
-                            print('f1 score = {0}'.format(f1))
+                            print('TP={0}, TN={1}, FP={2}, FN={3}, f1 score = {4}'.format(TP_score,
+                                                                                          TN_score,
+                                                                                          FP_score,
+                                                                                          FN_score,
+                                                                                          f1))
 
                             #prediction = pred.eval(feed_dict={
                             #                x1: val_x_1,
