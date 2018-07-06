@@ -3,6 +3,7 @@ import numpy as np
 from collections import OrderedDict
 from model import Model
 import sys
+from random import shuffle
 import os
 import io
 import codecs
@@ -48,15 +49,15 @@ sys.setdefaultencoding('utf8')
 #     reader = csv.reader(csv_file, delimiter='\t')
 #     data2 = [row for row in reader]
 #     pass
-data_size = 10
-for i in range(int(data_size*0.8)):
-    print(i)
-
-for i in range(int(data_size*0.8), int(data_size*0.9)):
-    print(i)
-
-for i in range(int(data_size*0.9), data_size):
-    print(i)
+# data_size = 10
+# for i in range(int(data_size*0.8)):
+#     print(i)
+#
+# for i in range(int(data_size*0.8), int(data_size*0.9)):
+#     print(i)
+#
+# for i in range(int(data_size*0.9), data_size):
+#     print(i)
 # with open('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv') as f:
 #     data1 = f.readlines()
 #
@@ -72,3 +73,19 @@ for i in range(int(data_size*0.9), data_size):
 # b = b.dropna(axis=1)
 # merged = a.merge(b, on='title')
 # merged.to_csv("../dataset/merged.csv", index=False)
+
+with open('/Users/shyietliu/python/ATEC/project/NLP/dataset/train_data.txt') as f:
+    data = f.readlines()
+
+    # shuffled_data = data
+
+    shuffle(data)
+
+with open('../dataset/shuffled_train_data.txt', 'a') as f:
+    for ele in data:
+        f.write(ele)
+
+pass
+
+
+

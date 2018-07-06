@@ -42,6 +42,9 @@ class DataProvider(object):
         self.val_data_size = None
         self.test_data_size = None
         self.batch_size = None
+        self.train_cate = 0
+        self.val_cate = 0
+        self.test_cate = 0
         self.pointer = 0
         self.data = None
         self.data_size = None
@@ -53,23 +56,32 @@ class DataProvider(object):
 
     @property
     def train(self):
-        self.path = '../dataset/train_data.txt'
+        self.data = self.train_data
         self.pointer = self.train_pointer
         self.data_size = self.train_data_size
+        self.train_cate = 1
+        self.val_cate = 0
+        self.test_cate = 0
         return self
 
     @property
     def val(self):
-        self.path = '../dataset/val_data.txt'
+        self.data = self.val_data
         self.pointer = self.val_pointer
         self.data_size = self.val_data_size
+        self.train_cate = 0
+        self.val_cate = 1
+        self.test_cate = 0
         return self
 
     @property
     def test(self):
-        self.path = '../dataset/test_data.txt'
+        self.data = self.test_data
         self.pointer = self.test_pointer
         self.data_size = self.test_data_size
+        self.train_cate = 0
+        self.val_cate = 0
+        self.test_cate = 1
         return self
 
     def pre_process(self, csv_file_path):
@@ -226,13 +238,14 @@ class DataProvider(object):
         # read data
         if not self.ALREADY_LOAD_DATA:
             if os.path.isfile('../dataset/train_data.txt'):
-                with open('../dataset/train_data.txt', 'r') as f:
+                print('loading data...')
+                with open('../dataset/shuffled_train_data.txt', 'r') as f:
                     self.train_data = f.read().splitlines()
                     self.train_data_size = len(self.train_data)
-                with open('../dataset/val_data.txt', 'r') as f:
+                with open('../dataset/shuffled_val_data.txt', 'r') as f:
                     self.val_data = f.read().splitlines()
                     self.val_data_size = len(self.val_data)
-                with open('../dataset/test_data.txt', 'r') as f:
+                with open('../dataset/shuffled_test_data.txt', 'r') as f:
                     self.test_data = f.read().splitlines()
                     self.test_data_size = len(self.test_data)
             else:
@@ -289,10 +302,18 @@ class DataProvider(object):
                 y_batch.append(y)
 
         if self.pointer + 2*batch_size > self.data_size:
+            print('rest')
             self.pointer = 0  # reset pointer
         else:
             # move pointer to new location
-            self.pointer += batch_size
+            self.pointer += self.batch_size
+
+        if self.train_cate:
+            self.train_pointer = self.pointer
+        elif self.val_cate:
+            self.val_pointer = self.pointer
+        elif self.test_cate:
+            self.test_pointer = self.pointer
 
         return x1_batch, x2_batch, np.array(y_batch).reshape([-1,])
 
@@ -411,8 +432,16 @@ if __name__ == '__main__':
     data_provider = DataProvider()
 
     # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
-    # # x1, x2, y = data_provider.train.next_batch(100)
-    data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/merged.csv')
+    x1, x2, y = data_provider.train.next_batch(3)
+    v1, v2, vy3 = data_provider.val.next_batch(3)
+    xx1, xx2, yy = data_provider.train.next_batch(3)
+
+
+
+    # x1, x2, y = data_provider.val.next_batch(10)
+    #
+    # x1, x2, y = data_provider.test.next_batch(10)
+    # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/merged.csv')
     # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
     # count_same_meaning = 0
 

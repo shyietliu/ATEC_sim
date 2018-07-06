@@ -157,13 +157,40 @@ class LSTM(Model):
 
                             # time_end = time.time()
                             # print('evaluate model with batch size=100 takes {0}s'.format(time_end - time_start))
+                            # TP, TN, FP, FN
 
-                            #f1 = f1.eval(feed_dict={
-                            #                x1: val_x_1,
-                            #                x2: val_x_2,
-                            #                y: val_y,
-                            #                prob: 1.0}
-                            #                )
+                            TP_score = TP.eval(feed_dict={
+                                           x1: val_x_1,
+                                           x2: val_x_2,
+                                           y: val_y,
+                                           prob: 1.0,
+                                           norm_gain: 1.0})
+
+                            TN_score = TN.eval(feed_dict={
+                                x1: val_x_1,
+                                x2: val_x_2,
+                                y: val_y,
+                                prob: 1.0,
+                                norm_gain: 1.0})
+
+                            FP_score = FP.eval(feed_dict={
+                                x1: val_x_1,
+                                x2: val_x_2,
+                                y: val_y,
+                                prob: 1.0,
+                                norm_gain: 1.0})
+
+                            FN_score = FP.eval(feed_dict={
+                                x1: val_x_1,
+                                x2: val_x_2,
+                                y: val_y,
+                                prob: 1.0,
+                                norm_gain: 1.0})
+
+                            precision = TP_score/(TP_score+FP_score)
+                            recall = TP_score/(TP_score+FN_score)
+                            f1 = 2* precision * recall /(precision+recall)
+                            print('f1 score = {0}'.format(f1))
 
                             #prediction = pred.eval(feed_dict={
                             #                x1: val_x_1,
