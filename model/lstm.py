@@ -70,7 +70,7 @@ class LSTM(Model):
 
         return logits
 
-    def train(self, epochs, exp_name, lr=1e-4, keep_prob=0.5, normal_gain=0.8, save_model=False, batch_size=10):
+    def train(self, epochs, exp_name, lr=1e-4, keep_prob=0.5, normal_gain=0.8, save_model=False, batch_size=10, save_epoch=[]):
 
         # inputs & outputs format
         # -------------------------------------------------------------------- #
@@ -193,6 +193,10 @@ class LSTM(Model):
                         # save train process
                         log_saver.train_process_saver([epoch, train_loss, val_acc])
 
+                # Model save
+                if save_model and epoch in save_epoch:
+                    log_saver.model_saver(sess, epoch)
+
             # evaluate
             mean_test_acc = 0
             for i in tqdm(range(100)):
@@ -214,18 +218,17 @@ class LSTM(Model):
             # save training log
             log_saver.test_result_saver([test_acc])
 
-            # Model save
-            if save_model:
-                log_saver.model_saver(sess, epoch)
+            
 
 
 if __name__ == '__main__':
-
-    model = LSTM(13250)
-    model.train(epochs=10,
-                exp_name='test',
-                lr=1e-4,
-                keep_prob=0.5,
-                normal_gain=0.8,
-                save_model=False,
-                batch_size=100)
+    pass
+    #
+    # model = LSTM(13250)
+    # model.train(epochs=10,
+    #             exp_name='test',
+    #             lr=1e-4,
+    #             keep_prob=0.5,
+    #             normal_gain=0.8,
+    #             save_model=False,
+    #             batch_size=100)
