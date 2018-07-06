@@ -6,7 +6,8 @@ import sys
 import os
 import io
 import codecs
-
+import csv
+import pandas as pd
 
 
 reload(sys)
@@ -39,42 +40,35 @@ sys.setdefaultencoding('utf8')
 # pred = tf.placeholder(tf.float32, [None, 2])
 # y = tf.placeholder(tf.float32, [None, 2])
 # f1 = model.compute_f1_score(pred, y)
+# with open('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv') as csv_file:
+#     reader = csv.reader(csv_file, delimiter='\t')
+#     data1 = [row for row in reader]
 
-if os.path.isfile('../dataset/data.txt'):
-    with open('../dataset/data.txt', 'r') as f:
-        data = f.read().splitlines()
+# with open('/Users/shyietliu/python/ATEC/project/NLP/dataset/merged.csv') as csv_file:
+#     reader = csv.reader(csv_file, delimiter='\t')
+#     data2 = [row for row in reader]
+#     pass
+data_size = 10
+for i in range(int(data_size*0.8)):
+    print(i)
 
-    count_class_0 = 0
-    count_class_1 = 0
-    to_append_data = []
+for i in range(int(data_size*0.8), int(data_size*0.9)):
+    print(i)
 
-    for i, data_string in enumerate(data):
-        each_data = data_string.split(',')
-        label = int(each_data[3])
+for i in range(int(data_size*0.9), data_size):
+    print(i)
+# with open('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv') as f:
+#     data1 = f.readlines()
+#
+# with open('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv') as f:
+#     data2 = f.readlines()
+#
+# with open('../dataset/merged.csv', 'w') as f:
+#     for ele in (data1+data2):
+#         f.write(ele)
 
-        if label == 0:
-            count_class_0 += 1
-        else:
-            count_class_1 += 1
-            to_append_data.append(data_string)
-            to_append_data.append(data_string)
-            to_append_data.append(data_string)
-
-        if i%1000 == 0:
-            print(i)
-        pass
-
-    data = to_append_data
-    with codecs.open('../dataset/oversampling_data.txt', 'a', 'utf-8-sig') as f:
-    # with open('', 'a') as f:
-        for idx, line in enumerate(data):
-            f.write((line[0] + ',').decode('utf-8'))
-            for item in line[1]:
-                f.write(str(item + '/'))
-            f.write(',')
-            for item in line[2]:
-                f.write(str(item + '/'))
-            f.write(',')
-            f.write(line[3] + '\n')
-            if idx % 1000 == 0:
-                print('saved {0} data pairs...'.format(idx))
+# a = pd.read_csv("/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv")
+# b = pd.read_csv("/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv")
+# b = b.dropna(axis=1)
+# merged = a.merge(b, on='title')
+# merged.to_csv("../dataset/merged.csv", index=False)

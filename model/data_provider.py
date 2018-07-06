@@ -30,14 +30,19 @@ class DataProvider(object):
         :param path: raw data path, including file name and suffix
         :param batch_size: costumed batch size
         """
-        # self.path = path
+        self.path = None
         self.vocabulary = []
-        self.train_index = None
-        self.test_index = None
-        self.val_index = None
-        self.index = None
+        self.train_data = None
+        self.test_data = None
+        self.val_data = None
+        self.train_pointer = 0
+        self.val_pointer = 0
+        self.test_pointer = 0
+        self.train_data_size = None
+        self.val_data_size = None
+        self.test_data_size = None
         self.batch_size = None
-        self.batch_count = 0
+        self.pointer = 0
         self.data = None
         self.data_size = None
         self.ALREADY_LOAD_DATA = 0
@@ -48,17 +53,23 @@ class DataProvider(object):
 
     @property
     def train(self):
-        self.index = self.train_index
+        self.path = '../dataset/train_data.txt'
+        self.pointer = self.train_pointer
+        self.data_size = self.train_data_size
         return self
 
     @property
     def val(self):
-        self.index = self.val_index
+        self.path = '../dataset/val_data.txt'
+        self.pointer = self.val_pointer
+        self.data_size = self.val_data_size
         return self
 
     @property
     def test(self):
-        self.index = self.test_index
+        self.path = '../dataset/test_data.txt'
+        self.pointer = self.test_pointer
+        self.data_size = self.test_data_size
         return self
 
     def pre_process(self, csv_file_path):
@@ -70,8 +81,8 @@ class DataProvider(object):
             reader = csv.reader(csv_file, delimiter='\t')
             data = [row for row in reader]  # data structure: [no., sen1, sen2, label]
 
-        over_sample_data = []
-
+        data_size = len(data)
+        print(data_size)
         # activate user dict
         jieba.load_userdict('../dataset/user_dict.txt')
         time_start = time.time()
@@ -97,47 +108,74 @@ class DataProvider(object):
             row[1] = jieba.lcut(string_1)
             row[2] = jieba.lcut(string_2)
 
-            if int(row[3]) == 1:
-                over_sample_data.append(row)
-                over_sample_data.append(row)
-                over_sample_data.append(row)
-
             # update vocabulary
             self.vocabulary = self.vocabulary + row[1] + row[2]
             time_end = time.time()
             if idx % 1000 == 0:
                 print('processed {0} sentence pairs using {1}s'.format(idx, time_end - time_start))
-                break
+
 
         # delete duplicated
         self.vocabulary = list(OrderedDict.fromkeys(self.vocabulary))
 
-        v_file_name = 'test_vocab.txt'
-        d_file_name = 'oversampling_data.txt'
+        # v_file_name = 'test_vocab.txt'
 
         if not os.path.exists(vocab_path):
             os.makedirs(vocab_path)
 
         # save vocabulary
-        with open(vocab_path+v_file_name, 'w') as f:
-            for item in self.vocabulary:
-                print>> f, item
+        # with open(vocab_path+v_file_name, 'w') as f:
+        #     for item in self.vocabulary:
+        #         print>> f, item
 
-        # save cleaned data
-        data = data+over_sample_data
-        with open(vocab_path+d_file_name, "a") as f:
-            for idx, line in enumerate(data):
-                f.write(line[0]+',')
+        # save train, val, test data
+        with open(vocab_path+'train_data.txt', 'a') as f:
+            for i in range(int(data_size*0.8)):
+                line = data[i]
+                if int(line[3]) == 1:
+                    iteration = 3
+                else:
+                    iteration = 1
+
+                for j in range(iteration):
+                    f.write(line[0] + ',')
+                    for item in line[1]:
+                        f.write(str(item + '/'))
+                    f.write(',')
+                    for item in line[2]:
+                        f.write(str(item + '/'))
+                    f.write(',')
+                    f.write(line[3] + '\n')
+                if i % 1000 == 0:
+                    print('saved {0} data pairs...'.format(i))
+
+        with open(vocab_path+'val_data.txt', 'a') as f:
+            for i in range(int(data_size*0.8), int(data_size*0.9)):
+                line = data[i]
+                f.write(line[0] + ',')
                 for item in line[1]:
-                    f.write(str(item+'/'))
+                    f.write(str(item + '/'))
                 f.write(',')
                 for item in line[2]:
-                    f.write(str(item+'/'))
+                    f.write(str(item + '/'))
                 f.write(',')
-                f.write(line[3]+'\n')
-                if idx % 1000 == 0:
-                    print('saved {0} data pairs...'.format(idx))
-                    break
+                f.write(line[3] + '\n')
+                if i % 1000 == 0:
+                    print('saved {0} data pairs...'.format(i))
+
+        with open(vocab_path+'test_data.txt', 'a') as f:
+            for i in range(int(data_size*0.9), data_size):
+                line = data[i]
+                f.write(line[0] + ',')
+                for item in line[1]:
+                    f.write(str(item + '/'))
+                f.write(',')
+                for item in line[2]:
+                    f.write(str(item + '/'))
+                f.write(',')
+                f.write(line[3] + '\n')
+                if i % 1000 == 0:
+                    print('saved {0} data pairs...'.format(i))
 
     def one_hot(self, list_of_index, vocab_size=None, pad=False, max_len=None):
         """
@@ -187,13 +225,20 @@ class DataProvider(object):
     def load_data(self):
         # read data
         if not self.ALREADY_LOAD_DATA:
-            if os.path.isfile('../dataset/data.txt'):
-                with open('../dataset/data.txt', 'r') as f:
-                    self.data = f.read().splitlines()
-                    self.ALREADY_LOAD_DATA = 1
+            if os.path.isfile('../dataset/train_data.txt'):
+                with open('../dataset/train_data.txt', 'r') as f:
+                    self.train_data = f.read().splitlines()
+                    self.train_data_size = len(self.train_data)
+                with open('../dataset/val_data.txt', 'r') as f:
+                    self.val_data = f.read().splitlines()
+                    self.val_data_size = len(self.val_data)
+                with open('../dataset/test_data.txt', 'r') as f:
+                    self.test_data = f.read().splitlines()
+                    self.test_data_size = len(self.test_data)
             else:
                 raise Exception('No data file! Please preprocess data by running $pre_process$ method first!')
-            self.split_data()
+            self.ALREADY_LOAD_DATA = 1
+            # self.split_data()
 
     def padding(self, seq):
         """
@@ -214,17 +259,17 @@ class DataProvider(object):
                  x2_batch: 2D list of index of the words [batch_size, word_index]
                  y_batch: label [batch_size] in one-hot form
         """
-        if type(batch_size) is int:
-            self.batch_size = batch_size
-        elif batch_size == 'all':
-            self.batch_size = len(self.index)
-        total_num_batch = int(self.data_size / self.batch_size)  # the number of batches
+        # if type(batch_size) is int:
+        self.batch_size = batch_size
+        # elif batch_size == 'all':
+        # #     self.batch_size = len(self.index)
+        # total_num_batch = int(self.data_size / self.batch_size)  # the number of batches
 
         x1_batch = []
         x2_batch = []
         y_batch = []
 
-        for index in self.index[self.batch_count:self.batch_count+self.batch_size]:
+        for index in range(self.pointer, self.pointer+batch_size):
             each_data = self.data[index].split(',')
             x1 = each_data[1]
             x2 = each_data[2]
@@ -243,10 +288,11 @@ class DataProvider(object):
                 x2_batch.append(self.padding(x2))
                 y_batch.append(y)
 
-        if self.batch_count == total_num_batch-1:
-            self.batch_count = 0  # reset count
+        if self.pointer + 2*batch_size > self.data_size:
+            self.pointer = 0  # reset pointer
         else:
-            self.batch_count = self.batch_count + 1
+            # move pointer to new location
+            self.pointer += batch_size
 
         return x1_batch, x2_batch, np.array(y_batch).reshape([-1,])
 
@@ -339,11 +385,12 @@ class DataProvider(object):
 
     def split_data(self):
         """Randomly split data (7-2-1)"""
-        self.data_size = len(self.data)
-        index = np.random.permutation(self.data_size)
-        self.train_index = index[: int(self.data_size*0.8)]
-        self.val_index = index[int(self.data_size*0.8): int(self.data_size*0.9)]
-        self.test_index = index[int(self.data_size*0.9):]
+        # self.data_size = len(self.data)
+        # index = np.random.permutation(self.data_size)
+        # self.train_index = index[: int(self.data_size*0.8)]
+        # self.val_index = index[int(self.data_size*0.8): int(self.data_size*0.9)]
+        # self.test_index = index[int(self.data_size*0.9):]
+        pass
 
     def word2idx(self, word):
         """Convert word to index"""
@@ -365,8 +412,8 @@ if __name__ == '__main__':
 
     # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
     # # x1, x2, y = data_provider.train.next_batch(100)
-    data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv')
-    data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
+    data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/merged.csv')
+    # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
     # count_same_meaning = 0
 
 
