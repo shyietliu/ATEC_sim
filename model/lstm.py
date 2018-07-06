@@ -99,7 +99,7 @@ class LSTM(Model):
 
         accuracy = self.compute_accuracy(logits, y_one_hot)
 
-        f1 = self.compute_f1_score(logits, y_one_hot)
+        TP, TN, FP, FN = self.compute_f1_score(logits, y_one_hot)
 
         train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss, name='train_op')
 
@@ -119,15 +119,11 @@ class LSTM(Model):
 
                     # time_start = time.time()
                     batch_x_1, batch_x_2, batch_y = data_provider.train.next_batch(batch_size)
-                    # time_mid = time.time()
-                    # print('load data takes {0}s'.format(time_mid-time_start))
                     sess.run(train_op, feed_dict={x1: batch_x_1,
                                                   x2: batch_x_2,
                                                   y: batch_y,
                                                   prob: keep_prob,
                                                   norm_gain: normal_gain})
-                    # time_end = time.time()
-                    # print('train model with batch size={0} takes {1}s'.format(batch_size, time_end - time_mid))
 
                     # validating
                     if iteration % 50 == 0 and iteration != 0:
@@ -194,7 +190,7 @@ class LSTM(Model):
                         log_saver.train_process_saver([epoch, train_loss, val_acc])
 
                 # Model save
-                if save_model and epoch in save_epoch:
+                if save_model and epoch+1 in save_epoch:
                     log_saver.model_saver(sess, epoch)
 
             # evaluate

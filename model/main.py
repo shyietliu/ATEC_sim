@@ -36,4 +36,4 @@ if __name__ == '__main__':
 
 
 
-# --epoch 1 --exp_name 'LSTM_Attn' --lr 1e-4 --keep_prob 0.5 --norm_gain 0.8 --save_model True --batch_size 1 --save_epoch_list [1]
+# --epoch 10 --exp_name 'LSTM_Attn_lr_1e-4_dropout_05_norm_08' --lr 1e-4 --keep_prob 0.5 --norm_gain 0.8 --save_model True --batch_size 100 --save_epoch_list 0,2

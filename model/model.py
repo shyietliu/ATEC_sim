@@ -60,7 +60,7 @@ class Model(object):
         # # precision = TP/(TP+FP) if (TP+FP) !=0 else 0.0001
         # # recall = TP/(TP+FN) if (TP+FN) !=0 else 0.0001
         # f1_score = 2 * precision * recall / (precision + recall)
-        return f1
+        return TP, TN, FP, FN
         # return [system_prediction, ground_truth], [TP, TN, FP, FN]
 
     @staticmethod

@@ -62,13 +62,16 @@ class DataProvider(object):
         return self
 
     def pre_process(self, csv_file_path):
-        """Clean data and Create a vocabulary, save them to $vocab_path$"""
+        """Clean data and Create a vocabulary, save them to $vocab_path$, and oversampling data"""
         vocab_path = '../dataset/'
 
         # read data file
         with open(csv_file_path) as csv_file:
             reader = csv.reader(csv_file, delimiter='\t')
             data = [row for row in reader]  # data structure: [no., sen1, sen2, label]
+
+        over_sample_data = []
+
         # activate user dict
         jieba.load_userdict('../dataset/user_dict.txt')
         time_start = time.time()
@@ -94,17 +97,23 @@ class DataProvider(object):
             row[1] = jieba.lcut(string_1)
             row[2] = jieba.lcut(string_2)
 
+            if int(row[3]) == 1:
+                over_sample_data.append(row)
+                over_sample_data.append(row)
+                over_sample_data.append(row)
+
             # update vocabulary
             self.vocabulary = self.vocabulary + row[1] + row[2]
             time_end = time.time()
             if idx % 1000 == 0:
                 print('processed {0} sentence pairs using {1}s'.format(idx, time_end - time_start))
+                break
 
         # delete duplicated
         self.vocabulary = list(OrderedDict.fromkeys(self.vocabulary))
 
-        v_file_name = 'vocab.txt'
-        d_file_name = 'data.txt'
+        v_file_name = 'test_vocab.txt'
+        d_file_name = 'oversampling_data.txt'
 
         if not os.path.exists(vocab_path):
             os.makedirs(vocab_path)
@@ -115,6 +124,7 @@ class DataProvider(object):
                 print>> f, item
 
         # save cleaned data
+        data = data+over_sample_data
         with open(vocab_path+d_file_name, "a") as f:
             for idx, line in enumerate(data):
                 f.write(line[0]+',')
@@ -127,7 +137,7 @@ class DataProvider(object):
                 f.write(line[3]+'\n')
                 if idx % 1000 == 0:
                     print('saved {0} data pairs...'.format(idx))
-
+                    break
 
     def one_hot(self, list_of_index, vocab_size=None, pad=False, max_len=None):
         """
@@ -161,8 +171,6 @@ class DataProvider(object):
         else:
             padded_seq = np.pad(list_of_index, (0, self.sequence_max_len - len(list_of_index)), 'constant')
             matrix[np.arange(max_len), padded_seq] = 1
-
-
 
         return matrix.tolist()
 
@@ -356,9 +364,12 @@ if __name__ == '__main__':
     data_provider = DataProvider()
 
     # data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
-    # x1, x2, y = data_provider.train.next_batch(100)
-    data_provider.save_json_data()
+    # # x1, x2, y = data_provider.train.next_batch(100)
+    data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train.csv')
+    data_provider.pre_process('/Users/shyietliu/python/ATEC/project/NLP/dataset/atec_nlp_sim_train_add.csv')
     # count_same_meaning = 0
+
+
     # count_diff_meaning = 0
     # for i in range(5000):
     #     if i%500 == 0 and i!=0:
